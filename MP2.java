@@ -10,12 +10,12 @@ public class MP2 {
     private static int nDPS = 0;
     private static int t1 = 0;
     private static int t2 = 0;
+    private static int nUpdate = 0;
 
     static class Dungeon {
         private Boolean isActive;
         private int nPartyServed;
         private int totalTime;
-//        private Party currentParty;
 
         public Dungeon() {
             this.isActive = false;
@@ -23,12 +23,6 @@ public class MP2 {
             this.totalTime = 0;
         }
 
-//        public void setCurrentParty(Party party) {
-//            this.currentParty = party;
-//        }
-//        public void clearCurrentParty() {
-//            currentParty = null;
-//        }
         public Boolean getActive() {
             return isActive;
         }
@@ -75,32 +69,80 @@ public class MP2 {
             }
         }
 
-        public static synchronized void enqueueParty(Party party){
+        public static synchronized void enqueueParty(){
+            // PRINT CURRENT STATUS OF ALL
+            nUpdate = nUpdate + 1;
+            System.out.println("from enqueue: Update " + nUpdate + ":");
+            for (int i = 0; i < DungeonManager.dungeonThreads.length; i++) {
+                if (!DungeonManager.dungeonThreads[i].getActive()) {
+                    System.out.println("Dungeon " + i + ": " +  DungeonManager.dungeonThreads[i].getActive());
+                } else {
+                    System.out.println("Dungeon " + i + ": " +  DungeonManager.dungeonThreads[i].getActive());
+                }
+            }
+            System.out.println("Tanks: " + nTanks);
+            System.out.println("Healers: " + nHealers);
+            System.out.println("DPS: " + nDPS);
+
             if(nTanks >= 1 && nHealers >= 1 && nDPS >= 3) {
                 nTanks = nTanks - 1;
                 nHealers = nHealers - 1;
                 nDPS = nDPS - 3;
 
+                Party party = new Party();
                 assignPartyToDungeon(party);
+            } else {
+                System.out.println("SUMMARY HERE");
             }
         }
 
         private static void assignPartyToDungeon(Party party) {
-            for (Dungeon dungeonThread : dungeonThreads) {
-                if (!dungeonThread.getActive()) {
-                    dungeonThread.setActive(true);
 
+            // ASSIGN NEW PARTY TO AVAILABLE DUNGEON + PRINT CURRENT STATUS OF ALL
+            nUpdate = nUpdate + 1;
+            System.out.println("from assignParty: Update " + nUpdate + ":");
+            for (int i = 0; i < dungeonThreads.length; i++) {
+                if (!dungeonThreads[i].getActive()) {
+
+                    System.out.println("Dungeon " + i + ": " +  dungeonThreads[i].getActive());
+
+                    dungeonThreads[i].setActive(true);
+                    int currentThreadFinal = i;
                     new Thread(() -> {
                         try {
-                            Thread.sleep(party.clearTime * 1000);
+                            Thread.sleep(party.clearTime * 1000L);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
-
-                        dungeonThread.emptyDungeon(party);
+                        dungeonThreads[currentThreadFinal].emptyDungeon(party);
                     }).start();
+                } else {
+                    System.out.println("Dungeon " + i + ": " +  dungeonThreads[i].getActive());
                 }
             }
+            System.out.println("Tanks: " + nTanks);
+            System.out.println("Healers: " + nHealers);
+            System.out.println("DPS: " + nDPS);
+            enqueueParty();
+
+
+//            for (Dungeon dungeonThread : dungeonThreads) {
+//                if (!dungeonThread.getActive()) {
+//                    dungeonThread.setActive(true);
+//
+//                    System.out.println(dungeonThread + "Active");
+//
+//                    new Thread(() -> {
+//                        try {
+//                            Thread.sleep(party.clearTime * 1000);
+//                        } catch (InterruptedException e) {
+//                            e.printStackTrace();
+//                        }
+//
+//                        dungeonThread.emptyDungeon(party);
+//                    }).start();
+//                }
+//            }
         }
     }
 
@@ -125,8 +167,7 @@ public class MP2 {
         System.out.print("T1: ");
         t2 = scanner.nextInt();
 
-        Party party = new Party();
-        DungeonManager.enqueueParty(party);
+        DungeonManager.enqueueParty();
     }
 
 }
