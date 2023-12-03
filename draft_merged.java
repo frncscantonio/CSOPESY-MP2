@@ -1,7 +1,7 @@
 import java.util.Random;
 import java.util.Scanner;
 
-public class MP2 {
+public class draft_merged {
     private static int maxInstances = 0;
     private static int nTanks = 0;
     private static int nHealers= 0;
@@ -9,6 +9,7 @@ public class MP2 {
     private static int t1 = 0;
     private static int t2 = 0;
     private static int nUpdate = 0;
+    private static boolean updatesRemoved = false;
 
     static class Dungeon {
         private Boolean isActive;

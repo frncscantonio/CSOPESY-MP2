@@ -3,7 +3,7 @@ import java.util.Queue;
 import java.util.Random;
 import java.util.Scanner;
 
-public class draft2 {
+public class draft3 {
     private static int maxInstances = 0;
     private static int nTanks = 0;
     private static int nHealers = 0;
@@ -11,7 +11,7 @@ public class draft2 {
     private static int t1 = 0;
     private static int t2 = 0;
     private static int nUpdate = 0;
-    private static int currentTime = 0;
+//    private static int currentTime = 0;
 
     static class Dungeon {
         private boolean isActive;
@@ -59,7 +59,7 @@ public class draft2 {
             this.isActive = false;
             this.nPartyServed++;
             this.totalTime += party.getClearTime();
-            DungeonManager.enqueueParty(this); // idk
+            DungeonManager.enqueueParty();
         }
     }
 
@@ -77,7 +77,7 @@ public class draft2 {
     }
 
     static class DungeonManager {
-        //        private static final Queue<Party> partyQueue = new LinkedList<>();
+        private static final Queue<Party> partyQueue = new LinkedList<>();
         private static final Dungeon[] dungeons = new Dungeon[maxInstances];
 
         static {
@@ -86,24 +86,29 @@ public class draft2 {
             }
         }
 
-        public static synchronized void enqueueParty(Dungeon dungeon) {
+        public static synchronized void enqueueParty() {
             nUpdate++;
+//            currentTime++;
 
-            System.out.println("Update " + nUpdate + " (" + currentTime + "s):");
+            boolean dungeonsChanged = false;
+
+//            System.out.println("Update " + nUpdate + " (" + currentTime + "s):");
+            System.out.println("Update " + nUpdate + ":");
 
             for (int i = 0; i < dungeons.length; i++) {
-                Dungeon d = dungeons[i];
-                String status = d.isActive() ? "active" : "empty";
-                int clearTime = d.isActive() ? d.getCurrentPartyClearTime() : 0;
+                Dungeon dungeon = dungeons[i];
+                String status = dungeon.isActive() ? "active" : "empty";
+                int clearTime = dungeon.isActive() ? dungeon.getCurrentPartyClearTime() : 0;
                 System.out.println("Dungeon " + i + ": " + status + " (Clear Time: " + clearTime + "s)");
+                if (dungeon.isActive()) {
+                    dungeonsChanged = true;
+                }
             }
 
             System.out.println("Tanks: " + nTanks);
             System.out.println("Healers: " + nHealers);
             System.out.println("DPS: " + nDPS);
-        }
 
-        public static synchronized void enqueueParty() {
             if (canFormParty()) {
                 for (Dungeon dungeon : dungeons) {
                     if (canFormParty()) {
@@ -112,13 +117,15 @@ public class draft2 {
                         nDPS -= 3;
                         Party party = new Party();
                         dungeon.startParty(party);
-                        enqueueParty(dungeon);
+                        dungeonsChanged = true;
                     } else {
                         break;
                     }
                 }
-            } else {
-//                printSummary();
+            }
+
+            if (allDungeonsEmpty()) {
+                printSummary();
             }
         }
 
@@ -134,16 +141,16 @@ public class draft2 {
             }
             return true;
         }
+    }
 
-        private static void printSummary() {
-            System.out.println("SUMMARY:");
+    private static void printSummary() {
+        System.out.println("SUMMARY:");
 
-            for (int i = 0; i < dungeons.length; i++) {
-                Dungeon dungeon = dungeons[i];
-                System.out.println("Dungeon " + i + ":");
-                System.out.println("   Parties Served: " + dungeon.getNPartyServed());
-                System.out.println("   Total Time Served: " + dungeon.getTotalTime() + " seconds");
-            }
+        for (int i = 0; i < DungeonManager.dungeons.length; i++) {
+            Dungeon dungeon = DungeonManager.dungeons[i];
+            System.out.println("Dungeon " + i + ":");
+            System.out.println("   Parties Served: " + dungeon.getNPartyServed());
+            System.out.println("   Total Time Served: " + dungeon.getTotalTime() + " seconds");
         }
     }
 
@@ -169,6 +176,5 @@ public class draft2 {
         t2 = scanner.nextInt();
 
         DungeonManager.enqueueParty();
-        DungeonManager.printSummary();
     }
 }
