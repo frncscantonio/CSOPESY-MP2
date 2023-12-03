@@ -9,13 +9,25 @@ public class MP2 {
     private static int t1 = 0;
     private static int t2 = 0;
     private static int nUpdate = 0;
+    private static String redColor = "\u001B[31;1m";
+    private static String greenColor = "\u001B[32;1m";
+    private static String blueColor = "\u001B[34;1m";
+    private static String cyanColor = "\u001B[36;1m";
+    private static String resetColor = "\u001B[0m";
 
+
+    /**
+     * Represents a Dungeon in the program.
+     */
     static class Dungeon {
         private Boolean isActive;
         private int nPartyServed;
         private int totalTime;
-        private int currentPartyClearTime; // Added for tracking clear time
+        private int currentPartyClearTime;
 
+        /**
+         * Constructor to initialize Dungeon instance.
+         */
         public Dungeon() {
             this.isActive = false;
             this.nPartyServed = 0;
@@ -43,12 +55,22 @@ public class MP2 {
             return currentPartyClearTime;
         }
 
+        /**
+         * Marks the dungeon as empty and updates statistics when a party finishes clearing.
+         *
+         * @param party The party that cleared the dungeon.
+         */
         public void emptyDungeon(Party party) {
             this.isActive = false;
             this.nPartyServed = this.nPartyServed + 1;
             this.totalTime = this.totalTime + party.getClearTime();
         }
 
+        /**
+         * Sets the clear time for the active party in the dungeon.
+         *
+         * @param clearTime The clear time of the active party.
+         */
         public void setCurrentPartyClearTime(int clearTime) {
             this.currentPartyClearTime = clearTime;
         }
@@ -58,9 +80,16 @@ public class MP2 {
         }
     }
 
-    static class Party {
-        private int clearTime = 0;
 
+    /**
+     * Represents a Party in the program.
+     */
+    static class Party {
+        private final int clearTime;
+
+        /**
+         * Constructor to initialize Party instance with a random clear time.
+         */
         public Party() {
             Random random = new Random();
             this.clearTime = random.nextInt((t2 - t1) + 1) + t1;
@@ -71,6 +100,10 @@ public class MP2 {
         }
     }
 
+
+    /**
+     * Manages the dungeons and parties in the program.
+     */
     static class DungeonManager {
         private static final Dungeon[] dungeonThreads = new Dungeon[maxInstances];
 
@@ -80,6 +113,9 @@ public class MP2 {
             }
         }
 
+        /**
+         * Enqueues a new party to an available dungeon.
+         */
         public static synchronized void enqueueParty() {
             for (Dungeon dungeon : dungeonThreads) {
                 if (!dungeon.getActive() && nTanks >= 1 && nHealers >= 1 && nDPS >= 3) {
@@ -94,9 +130,15 @@ public class MP2 {
 
         }
 
+        /**
+         * Assigns a party to a dungeon and starts a thread for the party to clear the dungeon.
+         *
+         * @param dungeon The dungeon to assign the party to.
+         * @param party   The party to be assigned.
+         */
         private static void assignPartyToDungeon(Dungeon dungeon, Party party) {
             dungeon.setActive(true);
-            dungeon.setCurrentPartyClearTime(party.getClearTime()); // Set clear time for active party
+            dungeon.setCurrentPartyClearTime(party.getClearTime());
             printStatuses();
 
             new Thread(() -> {
@@ -112,16 +154,22 @@ public class MP2 {
             }).start();
         }
 
+        /**
+         * Prints the current status of dungeons and player counts.
+         */
         public static synchronized void printStatuses() {
             nUpdate++;
+
+
             System.out.println();
-            System.out.println("Update " + nUpdate + ":");
+            System.out.println(blueColor + "--- UPDATE " + nUpdate + " ---" + resetColor);
             for (int i = 0; i < dungeonThreads.length; i++) {
                 Dungeon dungeon = dungeonThreads[i];
-                String status = dungeon.isActive() ? "Active" : "Empty";
+                String status = dungeon.isActive() ? greenColor + "Active" + resetColor : redColor + "Empty" + resetColor;
                 int clearTime = dungeon.isActive() ? dungeon.getCurrentPartyClearTime() : 0;
                 System.out.println("Dungeon " + i + ": " + status + " (Clear Time: " + clearTime + "s)");
             }
+            System.out.println(blueColor +  "Player Counts:" + resetColor);
             System.out.println("Tanks: " + nTanks);
             System.out.println("Healers: " + nHealers);
             System.out.println("DPS: " + nDPS);
@@ -131,18 +179,11 @@ public class MP2 {
             }
         }
 
-
-        public static synchronized void checkForAvailableDungeon() {
-            if (nTanks >= 1 && nHealers >= 1 && nDPS >= 3) {
-                for (Dungeon dungeon : dungeonThreads) {
-                    if (!dungeon.getActive()) {
-                        enqueueParty();
-                        break;
-                    }
-                }
-            }
-        }
-
+        /**
+         * Checks if all dungeons are empty.
+         *
+         * @return True if all dungeons are empty, otherwise false.
+         */
         private static boolean allDungeonsEmpty() {
             for (Dungeon dungeon : dungeonThreads) {
                 if (dungeon.isActive()) {
@@ -152,19 +193,26 @@ public class MP2 {
             return true;
         }
 
+        /**
+         * Prints the summary of each dungeon's performance.
+         */
         private static void printSummary() {
             System.out.println();
-            System.out.println("---------- SUMMARY ----------");
+            System.out.println(cyanColor + "---------- SUMMARY ----------" + resetColor);
 
             for (int i = 0; i < dungeonThreads.length; i++) {
                 Dungeon dungeon = dungeonThreads[i];
-                System.out.println("Dungeon " + i + ":");
+                System.out.println();
+                System.out.println(greenColor + "Dungeon " + i + ":" + resetColor);
                 System.out.println("   Parties Served: " + dungeon.getNPartyServed());
                 System.out.println("   Total Time Served: " + dungeon.getTotalTime() + " seconds");
             }
         }
     }
 
+    /**
+     * The main method to start the program and input initial parameters.
+     */
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 
