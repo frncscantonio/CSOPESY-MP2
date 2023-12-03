@@ -9,11 +9,8 @@ public class MP2 {
     private static int t1 = 0;
     private static int t2 = 0;
     private static int nUpdate = 0;
-    private static String redColor = "\u001B[31;1m";
-    private static String greenColor = "\u001B[32;1m";
-    private static String blueColor = "\u001B[34;1m";
-    private static String cyanColor = "\u001B[36;1m";
-    private static String resetColor = "\u001B[0m";
+    private static final String greenColor = "\u001B[32;1m";
+    private static final String resetColor = "\u001B[0m";
 
 
     /**
@@ -159,12 +156,12 @@ public class MP2 {
          */
         public static synchronized void printStatuses() {
             nUpdate++;
-
-
             System.out.println();
+            String blueColor = "\u001B[34;1m";
             System.out.println(blueColor + "--- UPDATE " + nUpdate + " ---" + resetColor);
             for (int i = 0; i < dungeonThreads.length; i++) {
                 Dungeon dungeon = dungeonThreads[i];
+                String redColor = "\u001B[31;1m";
                 String status = dungeon.isActive() ? greenColor + "Active" + resetColor : redColor + "Empty" + resetColor;
                 int clearTime = dungeon.isActive() ? dungeon.getCurrentPartyClearTime() : 0;
                 System.out.println("Dungeon " + i + ": " + status + " (Clear Time: " + clearTime + "s)");
@@ -198,6 +195,7 @@ public class MP2 {
          */
         private static void printSummary() {
             System.out.println();
+            String cyanColor = "\u001B[36;1m";
             System.out.println(cyanColor + "---------- SUMMARY ----------" + resetColor);
 
             for (int i = 0; i < dungeonThreads.length; i++) {
