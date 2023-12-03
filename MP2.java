@@ -4,10 +4,10 @@ import java.util.Random;
 import java.util.Scanner;
 
 public class MP2 {
-    private int maxInstances = 0;   // maximum number of instances that can be concurrently active
-    private int nTanks = 0;
-    private int nHealers= 0;
-    private int nDPS = 0;
+    private static int maxInstances = 0;   // maximum number of instances that can be concurrently active
+    private static int nTanks = 0;
+    private static int nHealers= 0;
+    private static int nDPS = 0;
     private static int t1 = 0;
     private static int t2 = 0;
 
@@ -15,6 +15,7 @@ public class MP2 {
         private Boolean isActive;
         private int nPartyServed;
         private int totalTime;
+//        private Party currentParty;
 
         public Dungeon() {
             this.isActive = false;
@@ -22,6 +23,12 @@ public class MP2 {
             this.totalTime = 0;
         }
 
+//        public void setCurrentParty(Party party) {
+//            this.currentParty = party;
+//        }
+//        public void clearCurrentParty() {
+//            currentParty = null;
+//        }
         public Boolean getActive() {
             return isActive;
         }
@@ -34,16 +41,15 @@ public class MP2 {
             return nPartyServed;
         }
 
-        public void setNPartyServed(int nPartyServed) {
-            this.nPartyServed = nPartyServed;
-        }
-
         public int getTotalTime() {
             return totalTime;
         }
 
-        public void setTotalTime(int totalTime) {
-            this.totalTime = totalTime;
+
+        public void emptyDungeon(Party party) {
+            this.isActive = false;
+            this.nPartyServed = this.nPartyServed + 1;
+            this.totalTime = this.totalTime + party.getClearTime();
         }
     }
 
@@ -58,30 +64,69 @@ public class MP2 {
         public int getClearTime(){
             return clearTime;
         }
-
     }
 
-    public void main(String[] args) {
+    static class DungeonManager {
+        private static final Dungeon[] dungeonThreads = new Dungeon[maxInstances];
+
+        static {
+            for (int i = 0; i < maxInstances; i++) {
+                dungeonThreads[i] = new Dungeon();
+            }
+        }
+
+        public static synchronized void enqueueParty(Party party){
+            if(nTanks >= 1 && nHealers >= 1 && nDPS >= 3) {
+                nTanks = nTanks - 1;
+                nHealers = nHealers - 1;
+                nDPS = nDPS - 3;
+
+                assignPartyToDungeon(party);
+            }
+        }
+
+        private static void assignPartyToDungeon(Party party) {
+            for (Dungeon dungeonThread : dungeonThreads) {
+                if (!dungeonThread.getActive()) {
+                    dungeonThread.setActive(true);
+
+                    new Thread(() -> {
+                        try {
+                            Thread.sleep(party.clearTime * 1000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+
+                        dungeonThread.emptyDungeon(party);
+                    }).start();
+                }
+            }
+        }
+    }
+
+    public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 
         System.out.print("Enter the maximum number of concurrent instances (n): ");
-        this.maxInstances = scanner.nextInt();
+        maxInstances = scanner.nextInt();
 
         System.out.print("Number of tanks: ");
-        this.nTanks = scanner.nextInt();
+        nTanks = scanner.nextInt();
 
         System.out.print("Number of healers: ");
-        this.nHealers = scanner.nextInt();
+        nHealers = scanner.nextInt();
 
         System.out.print("Number of DPS: ");
-        this.nDPS = scanner.nextInt();
+        nDPS = scanner.nextInt();
 
         System.out.print("T1: ");
-        this.t1 = scanner.nextInt();
+        t1 = scanner.nextInt();
 
         System.out.print("T1: ");
-        this.t2 = scanner.nextInt();
+        t2 = scanner.nextInt();
 
+        Party party = new Party();
+        DungeonManager.enqueueParty(party);
     }
 
 }
